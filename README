@@ -1,2 +1,7 @@
 The uploaded file by name CliqueCheck.java checks whether the given graph is is a clique. A clique is a graph where every
 two vertices are connected to each other. Necessary imeplementation componenent for one of the tree width finding algorithms.
+
+Other code updated: 
+
+The RamaChandra Murthi Lower Bound - Lower Bound Algorithm For Computing Tree Width. There is some more code
+to be added to it.
