@@ -23,14 +23,17 @@ public class TreeWidth {
     }
     public int find()
     {
-        int tw = 100;
+        int tw = 100; long i = 0;
         Permute permuter = new Permute( graph.vertexSet().toArray() );
         while( permuter.hasNext() )
         {
+            if( i % 100 == 0 )
+            System.out.println( i );
             Object[] permutation = (Object[])permuter.next();
             int k = findmaxQ( permutation );
             if( k < tw )
                 tw = k;
+            i++;
         }
         return tw;
     }
