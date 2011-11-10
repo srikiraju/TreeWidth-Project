@@ -45,7 +45,7 @@ public class TreeWidth {
         for( int i = 0; i < vertices.length; i++)
         {
             int v = (Integer)vertices[i];
-            maxconnect = vertices.length-i;
+            int maxconnect = vertices.length-i;
             
             int Q = 0;
             //Find Q
