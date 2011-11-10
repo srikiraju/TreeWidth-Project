@@ -45,8 +45,12 @@ public class TreeWidth {
         for( int i = 0; i < vertices.length; i++)
         {
             int v = (Integer)vertices[i];
+            maxconnect = vertices.length-i;
+            
             int Q = 0;
             //Find Q
+            if(maxconnect > maxq) {
+                
             for( int j = i + 1; j < vertices.length; j++ )
             {
                 int w = (Integer)vertices[j];
@@ -61,10 +65,9 @@ public class TreeWidth {
 
             }
             if( Q > maxq)
-                maxq = Q;
-            
+                maxq = Q;           
+            }
         }
-        
         return maxq;
     }
 }
