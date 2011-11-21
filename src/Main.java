@@ -19,12 +19,12 @@ public class Main {
     public static void main(String[] args)
     {
         SimpleGraph<Integer, DefaultEdge> g = takeInput();
-        
+
         System.out.println( "Input is done. Processing" );
         TreeWidth tw = new TreeWidth( g );
         long t1 = System.nanoTime();
 
-        System.out.println( tw.find() );
+        System.out.println( tw.findDynamic() );
         long t2 = System.nanoTime();
         System.out.println("Execution time: " + ((t2 - t1) * 1e-6) + " milliseconds");
 
