@@ -37,71 +37,73 @@ public class TreeWidth {
         this.graph = graph;
     }
     
-        public int findTreeWidthByRecursion(Set<Integer> L, Set<Integer> S) {
-        
-    	System.out.println("Recursing again..");
-    	System.out.println("Printing L and S");
-    	System.out.println("L:	" + L.toString());
-    	System.out.println("S:	" + S.toString());
-    	System.out.println("Size of S:	" + S.size());
-    	
-    	if(S.size() <= 1) {
-    		if(S.size() == 0)
-    			return 0;
-    		Set<Integer> tempSet = new HashSet<Integer>();
-    		tempSet.addAll(L);
-    		tempSet.addAll(S);
-    		
-    		Set<Integer> vertexSet = graph.vertexSet();
-    		
-    		SimpleGraph check = (SimpleGraph)graph.clone();
-    		int Q = 0;
-    		for( Integer vert : vertexSet )
-            {
-    			for(Integer tmp: tempSet) {
-    				if(vert != tmp) {
-    					check.removeVertex(vert);
-    				}
-    			}
-            }
-    		for(Integer i: L) {
-    			if(DijkstraShortestPath.findPathBetween(check, i, S.toArray()[0]) != null) {
-    				Q++;
-    			}
-    		}
-    		return Q;
-    	}
+    public int findTreeWidthByRecursion(Set<Integer> L, Set<Integer> S) {
 
-    	// Set Opt to infinity
-    	int Opt = 100000;
-    	int initialDivide = S.size()/2;
-    	System.out.println("Size of division:	" + initialDivide);
-    	// Generate all the combinations of size initialDivide from the graph's vertex set
-    	Combinations combs_gen = new Combinations(S.size(), initialDivide);
+        System.out.println("Recursing again..");
+        System.out.println("Printing L and S");
+        System.out.println("L:	" + L.toString());
+        System.out.println("S:	" + S.toString());
+        System.out.println("Size of S:	" + S.size());
+
+        if (S.size() <= 1) {
+            if (S.size() == 0) {
+                return 0;
+            }
+            Set<Integer> tempSet = new HashSet<Integer>();
+            tempSet.addAll(L);
+            tempSet.addAll(S);
+
+            Set<Integer> vertexSet = graph.vertexSet();
+
+            SimpleGraph check = (SimpleGraph) graph.clone();
+            int Q = 0;
+            for (Integer vert : vertexSet) {
+                for (Integer tmp : tempSet) {
+                    if (vert != tmp) {
+                        check.removeVertex(vert);
+                    }
+                }
+
+            }
+            for (Integer i : L) {
+                if (DijkstraShortestPath.findPathBetween(check, i, S.toArray()[0]) != null) {
+                    Q++;
+                }
+            }
+            return Q;
+        }
+
+        // Set Opt to infinity
+        int Opt = 100000;
+        int initialDivide = S.size() / 2;
+        System.out.println("Size of division:	" + initialDivide);
+        // Generate all the combinations of size initialDivide from the graph's vertex set
+        Combinations combs_gen = new Combinations(S.size(), initialDivide);
+
         // Iterate through them and find recursive tree width
-    	while( combs_gen.hasNext() )
-        {
-    	    if( combs_gen.getNumLeft().mod(new BigInteger("1000")).equals(BigInteger.ZERO) )
-                System.out.println( combs_gen.getNumLeft() );
-            int a[] = (int[])combs_gen.next();
+        while (combs_gen.hasNext()) {
+            if (combs_gen.getNumLeft().mod(new BigInteger("1000")).equals(BigInteger.ZERO)) {
+                System.out.println(combs_gen.getNumLeft());
+            }
+            int a[] = (int[]) combs_gen.next();
             System.out.println("Find below the current S'");
             System.out.print("[");
-            for(int s1: a) {
-            	System.out.print((s1+1) + " ");
+            for (int s1 : a) {
+                System.out.print((s1 + 1) + " ");
             }
             System.out.println("]");
             System.out.println();
             // Put a in a set
             Set<Integer> Sdash = new LinkedHashSet();
-            for(int a1: a) {
-            	Sdash.add((Integer)(a1+1));
+            for (int a1 : a) {
+                Sdash.add((Integer) (a1 + 1));
             }
-          System.out.println("Sanity Check - Printing Sdash");
-          System.out.println(Sdash.toString());
-          System.out.println("Printing L");
-          System.out.println(L.toString());
-            
-          // Prepare L U Sdash
+            System.out.println("Sanity Check - Printing Sdash");
+            System.out.println(Sdash.toString());
+            System.out.println("Printing L");
+            System.out.println(L.toString());
+
+            // Prepare L U Sdash
             Set<Integer> LUnionSdash = new LinkedHashSet<Integer>();
             LUnionSdash.addAll(L);
             LUnionSdash.addAll(Sdash);
@@ -120,22 +122,23 @@ public class TreeWidth {
             // Sanity Check. Printing SminusSdash
             System.out.println("Printing SminusSdash:	" + SminusSdash.toString());
             // Check previous statement.. in order ??
-           
+
             int v1 = findTreeWidthByRecursion(L, Sdash);
             int v2 = findTreeWidthByRecursion(LUnionSdash, SminusSdash);
             Opt = min(Opt, max(v1, v2));
         }
-    	return Opt;
+        return Opt;
     }
-    private int min(int opt, int max) {
-    	return (opt < max ? opt:max);
-	}
-	private int max(int v1, int v2) {
-    	return (v1 > v2 ? v1:v2);
-	}
 
-    
-    
+    private int min(int opt, int max) {
+        return (opt < max ? opt : max);
+    }
+
+    private int max(int v1, int v2) {
+        return (v1 > v2 ? v1 : v2);
+    }
+
+
     public int findDynamic()
     {
         
