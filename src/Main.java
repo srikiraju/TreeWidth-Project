@@ -36,29 +36,42 @@ public class Main {
     public static SimpleGraph< Integer, DefaultEdge > takeInput()
     {
         Scanner s = new Scanner( System.in );
-        int nvertices = s.nextInt();
-        int nedges = s.nextInt();
+        int nvertices = -1;
+        int nedges = -1;
         
-        SimpleGraph<Integer, DefaultEdge> g =
-            new SimpleGraph<Integer, DefaultEdge>(DefaultEdge.class);
+        SimpleGraph<Integer, DefaultEdge> g = null;
         
-        for( int i = 1; i <= nvertices; i++ )
-            g.addVertex(i);
-
         while( s.hasNext())
         {
             String line = s.nextLine();
+            if( line.startsWith("#") )
+                continue;
             if( line.length() == 0 )
                 continue;
-            if( line.matches("end") )
-                break;
+            
             Scanner t = new Scanner( line );
-            int base_v = t.nextInt();
+            int base_v = -1;
             while( t.hasNextInt() )
             {
-                int v = t.nextInt();
-                g.addEdge(base_v, v);
+                if (nvertices == -1)
+                    nvertices = t.nextInt();
+                else if (nedges == -1) {
+                    nedges = t.nextInt();
+                    g = new SimpleGraph<Integer, DefaultEdge>(DefaultEdge.class);
+                    for (int i = 1; i <= nvertices; i++) {
+                        g.addVertex(i);
+                    }
+                }
+                else if( base_v == -1 )
+                    base_v = t.nextInt();
+                else
+                {
+                    int v = t.nextInt();
+                    g.addEdge(base_v, v);
+                }
             }
+            if( g.edgeSet().size() == nedges )
+                break;
         }
         return g;
     }
