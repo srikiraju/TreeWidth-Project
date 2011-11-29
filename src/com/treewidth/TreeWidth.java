@@ -9,12 +9,15 @@ import org.jgrapht.Graph;
 import com.treewidth.util.Permute;
 import java.math.BigInteger;
 import java.util.ArrayList;
+import java.util.BitSet;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 import org.jgrapht.alg.DijkstraShortestPath;
+import org.jgrapht.alg.NeighborIndex;
 import org.jgrapht.graph.DefaultEdge;
 import org.jgrapht.graph.SimpleGraph;
 
@@ -24,6 +27,9 @@ import org.jgrapht.graph.SimpleGraph;
  */
 public class TreeWidth {
     SimpleGraph<Integer, DefaultEdge> graph;
+    NeighborIndex nindex;
+    int upper_bound = 6;
+    int upper_bound_hit = 0;
     
     public TreeWidth( SimpleGraph<Integer, DefaultEdge> graph )
     {
@@ -130,7 +136,7 @@ public class TreeWidth {
     public int findDynamic()
     {
         HashMap<HashSet, Integer> processed = new HashMap<HashSet, Integer>();
-        
+        nindex = new NeighborIndex( graph );
         for( int i = 1; i <= graph.vertexSet().size(); i++ )
         {
             Combinations combs_gen = new Combinations(graph.vertexSet().size(), i);
@@ -145,7 +151,9 @@ public class TreeWidth {
                 SimpleGraph S = (SimpleGraph)graph.clone();
                 HashSet vertices_to_remove = new HashSet( S.vertexSet() );
                 for( int tmp : a )
+                {
                     vertices_to_remove.remove( ( Integer )(tmp+1) );
+                }
                 S.removeAllVertices(vertices_to_remove);
                 
                 
@@ -158,7 +166,7 @@ public class TreeWidth {
                     //Find TW(S-v)
                     Integer tw1 = processed.get(Sminusv);
                     //Find Q(S-v,v)
-                    Integer tw2 = findQ( Sminusv, (Integer)v );
+                    Integer tw2 = findQBetter( Sminusv, (Integer)v );
                     
                     if( tw1 != null && tw1 > tw2 )
                     {
@@ -174,6 +182,7 @@ public class TreeWidth {
                 processed.put( new HashSet(S.vertexSet()), tw);
             }
         }
+        System.out.println( upper_bound_hit );
         return (int)processed.get( new HashSet( graph.vertexSet() ) );
     }
     
@@ -243,8 +252,6 @@ public class TreeWidth {
     
     private int findQ(Set S, Integer v)
     {
-        if( S.size() == 1 )
-            return 0;
         int Q = 0;
         HashSet<Integer> w_tocheck = new HashSet<Integer>( graph.vertexSet() );
         w_tocheck.removeAll(S);
@@ -260,7 +267,42 @@ public class TreeWidth {
             }            
             if( DijkstraShortestPath.findPathBetween(check, v, w) != null )
                 Q++;
+            if( Q >= upper_bound )
+            {
+                break;
+            }
 
+        }
+        return Q;
+    }
+    
+    private int findQBetter(Set S, Integer v)
+    {
+        int Q = 0;
+        BitSet visited = new BitSet( graph.vertexSet().size() );
+        visited.set( v );
+        LinkedList queue = new LinkedList();
+        for( Object a : nindex.neighborsOf(v) )
+        {
+            queue.add(a);
+        }
+        
+        while( !queue.isEmpty() )
+        {
+            Integer consider = (Integer)queue.removeFirst();
+            if( visited.get(consider) )
+                continue;
+            visited.set(consider);
+            if( S.contains(consider) )
+            {
+                for( Object a : nindex.neighborsOf(consider) )
+                {
+                    if( !visited.get((Integer)a) )
+                        queue.add(a);
+                }
+            }
+            else
+                Q++;
         }
         return Q;
     }
