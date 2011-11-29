@@ -44,7 +44,9 @@ public class TreeWidth {
     	System.out.println("S:	" + S.toString());
     	System.out.println("Size of S:	" + S.size());
     	
-    	if(S.size() == 1) {
+    	if(S.size() <= 1) {
+    		if(S.size() == 0)
+    			return 0;
     		Set<Integer> tempSet = new HashSet<Integer>();
     		tempSet.addAll(L);
     		tempSet.addAll(S);
@@ -74,7 +76,7 @@ public class TreeWidth {
     	int initialDivide = S.size()/2;
     	System.out.println("Size of division:	" + initialDivide);
     	// Generate all the combinations of size initialDivide from the graph's vertex set
-    	Combinations combs_gen = new Combinations(graph.vertexSet().size(), initialDivide);
+    	Combinations combs_gen = new Combinations(S.size(), initialDivide);
         // Iterate through them and find recursive tree width
     	while( combs_gen.hasNext() )
         {
