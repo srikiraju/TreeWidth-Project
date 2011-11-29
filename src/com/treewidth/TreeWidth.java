@@ -30,6 +30,7 @@ public class TreeWidth {
     NeighborIndex nindex;
     int upper_bound = 6;
     int upper_bound_hit = 0;
+
     
     public TreeWidth( SimpleGraph<Integer, DefaultEdge> graph )
     {
@@ -137,10 +138,13 @@ public class TreeWidth {
     
     public int findDynamic()
     {
+        
         HashMap<HashSet, Integer> processed = new HashMap<HashSet, Integer>();
+
         nindex = new NeighborIndex( graph );
         for( int i = 1; i <= graph.vertexSet().size(); i++ )
         {
+            HashMap<HashSet, Integer> processed_now = new HashMap<HashSet, Integer>();
             Combinations combs_gen = new Combinations(graph.vertexSet().size(), i);
                         System.out.println( "Processing combs of size:" + i +":" + combs_gen.getTotal() );
 
@@ -167,9 +171,14 @@ public class TreeWidth {
                     Sminusv.remove((Integer)v);
                     //Find TW(S-v)
                     Integer tw1 = processed.get(Sminusv);
+                    if( tw1 == null && Sminusv.size() > 1 ) //eliminate this subset has tw > upperbound
+                    {
+                        upper_bound_hit ++;
+                        continue;
+                    }
                     //Find Q(S-v,v)
                     Integer tw2 = findQBetter( Sminusv, (Integer)v );
-                    
+
                     if( tw1 != null && tw1 > tw2 )
                     {
                         if( tw1 < tw )
@@ -181,11 +190,13 @@ public class TreeWidth {
                             tw = tw2;
                     }
                 }
-                processed.put( new HashSet(S.vertexSet()), tw);
+                if( tw < upper_bound )
+                    processed_now.put( new HashSet(S.vertexSet()), tw);
             }
+            processed = processed_now;
         }
         System.out.println( upper_bound_hit );
-        return (int)processed.get( new HashSet( graph.vertexSet() ) );
+        return processed.get( new HashSet( graph.vertexSet() ) ) == null ? upper_bound : (int)processed.get( new HashSet( graph.vertexSet() ) );
     }
     
     public int findBruteForce()
