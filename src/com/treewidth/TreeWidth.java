@@ -28,7 +28,7 @@ import org.jgrapht.graph.SimpleGraph;
 public class TreeWidth {
     SimpleGraph<Integer, DefaultEdge> graph;
     NeighborIndex nindex;
-    int upper_bound = 6;
+    int upper_bound = 10;
     int upper_bound_hit = 0;
 
     
@@ -154,24 +154,26 @@ public class TreeWidth {
 
             while( combs_gen.hasNext() )
             {
-                if( combs_gen.getNumLeft().mod(new BigInteger("1000")).equals(BigInteger.ZERO) )
+                if( combs_gen.getNumLeft().mod(new BigInteger("100000")).equals(BigInteger.ZERO) )
                     System.out.println( combs_gen.getNumLeft() );
                 int a[] = (int[])combs_gen.next();
                 //Create graph containing these vertices
-                SimpleGraph S = (SimpleGraph)graph.clone();
-                HashSet vertices_to_remove = new HashSet( S.vertexSet() );
+                Set S = new HashSet( graph.vertexSet() );
+                HashSet vertices_to_remove = new HashSet( S );
                 for( int tmp : a )
                 {
                     vertices_to_remove.remove( ( Integer )(tmp+1) );
                 }
-                S.removeAllVertices(vertices_to_remove);
+                S.removeAll(vertices_to_remove);
                 
+                HashMap qs = new HashMap();
+                findQEvenBetter( S, qs );
                 
                 int tw = 1000;
                 //For all vertices in our checklist
-                for( Object v: S.vertexSet() )
+                for( Object v: S )
                 {
-                    HashSet<Integer> Sminusv = new HashSet<Integer>( S.vertexSet() );
+                    HashSet<Integer> Sminusv = new HashSet<Integer>( S );
                     Sminusv.remove((Integer)v);
                     //Find TW(S-v)
                     Integer tw1 = processed.get(Sminusv);
@@ -181,7 +183,8 @@ public class TreeWidth {
                         continue;
                     }
                     //Find Q(S-v,v)
-                    Integer tw2 = findQBetter( Sminusv, (Integer)v );
+                    //Integer tw2 = findQBetter( Sminusv, (Integer)v );
+                    Integer tw2 = (Integer)qs.get(v);
 
                     if( tw1 != null && tw1 > tw2 )
                     {
@@ -195,7 +198,7 @@ public class TreeWidth {
                     }
                 }
                 if( tw < upper_bound )
-                    processed_now.put( new HashSet(S.vertexSet()), tw);
+                    processed_now.put( new HashSet(S), tw);
             }
             processed = processed_now;
         }
@@ -445,4 +448,56 @@ public class TreeWidth {
 		}
 		return Q;
 	}    
+
+    //Finding Q all at once, for all vertices
+    private void findQEvenBetter(Set S, HashMap qs)
+    {
+        BitSet visited = new BitSet( graph.vertexSet().size() );
+        for( Object v : S )
+        {
+            if( visited.get((Integer)v) )
+                continue;
+            int Q = 0;
+            visited.set( (Integer)v );
+
+            //All the vertices visited now are in the same connected
+            //component and therefore have the same Q
+            BitSet cc = new BitSet( graph.vertexSet().size() );
+            BitSet notwithin_s = new BitSet( graph.vertexSet().size() );
+            cc.set((Integer)v);
+            LinkedList queue = new LinkedList();
+            for( Object a : nindex.neighborsOf(v) )
+            {
+                queue.add(a);
+            }
+
+            while( !queue.isEmpty() )
+            {
+                Integer consider = (Integer)queue.removeFirst();
+                if( visited.get(consider) )
+                    continue;
+                visited.set(consider);
+                cc.set(consider);
+                if( S.contains(consider) )
+                {
+                    for( Object a : nindex.neighborsOf(consider) )
+                    {
+                        if( !visited.get((Integer)a) )
+                            queue.add(a);
+                    }
+                }
+                else
+                {
+                    Q++;
+                    notwithin_s.set( consider );
+                }
+            }
+            
+            for (int i = cc.nextSetBit(0); i >= 0; i = cc.nextSetBit(i+1)) {
+                qs.put(new Integer(i), new Integer(Q));
+            }
+            
+            visited.andNot(notwithin_s);
+        }
+    }
 }
