@@ -37,6 +37,7 @@ public class TreeWidth {
         this.graph = graph;
     }
     
+    /*
     public int findTreeWidthByRecursion(Set<Integer> L, Set<Integer> S) {
 
         System.out.println("Recursing again..");
@@ -129,7 +130,7 @@ public class TreeWidth {
         }
         return Opt;
     }
-
+    */
     private int min(int opt, int max) {
         return (opt < max ? opt : max);
     }
@@ -211,6 +212,22 @@ public class TreeWidth {
             if( i % 100 == 0 )
             System.out.println( i );
             Object[] permutation = (Object[])permuter.next();
+            /**
+             * Including following code since ClassCastExceptions
+             * were prevalent (in my impl) in casting between Integer
+             * and Object back and forth. So I decided  to pass Integer[]
+             * vertices itself. 
+             *
+             */
+            Integer[] intperm = new Integer[permutation.length];
+            int c = 0;
+            for(Object o:permutation) {
+                intperm[c] = (Integer)o;
+            	c++;
+            }	
+            int kbyRec = findMaxQByRecursion( intperm );    // Note: The method still returns k and not 
+                                                            // kbyRec. If you would like to test, change k to
+                                                            // kbyRec. 
             int k = findmaxQ( permutation );
             if( k < tw )
                 tw = k;
@@ -218,7 +235,7 @@ public class TreeWidth {
         }
         return tw;
     }
-    
+    /*
     public int findRec() {
         
         Set<Integer> L = new HashSet<Integer>();
@@ -233,7 +250,7 @@ public class TreeWidth {
         System.out.println(twByRec);
         return twByRec;
     }
-    
+    */
     private int findmaxQ( Object[] vertices )
     {
         int maxq = 0;
@@ -322,4 +339,110 @@ public class TreeWidth {
         }
         return Q;
     }
+    
+    private int findMaxQByRecursion(Integer[] vertices) {
+        int Q = 0;
+        Integer[] L = new Integer[0];
+    	int q = findTreeWidthByRec(L,vertices, Q);
+    	System.out.println("Value of q after Recursion:	" + q);
+    	int maxq = 0;
+    	
+        if( q > maxq ) {
+            maxq = Q;
+            System.out.println("Value of maxQ:	" + maxq);
+        }
+        return q;
+    }
+    
+    // Recursive Algorithm - Let me know if tree width is not ok. I dint test 
+    // on Suresh's graphs
+    private int findTreeWidthByRec(Integer[] leftToVertices, Integer[] vertices, int Q) {
+    	
+		Integer[] L = leftToVertices;
+		Integer[] S = vertices;
+		if(S.length == 1) {
+			Set<Integer> tempSet = new LinkedHashSet<Integer>();
+			List<Integer> Llist = Arrays.asList(L);
+			tempSet.addAll(Llist);
+			List<Integer> Slist1 = Arrays.asList(S);
+			tempSet.addAll(Slist1);
+			Set vertexSet = graph.vertexSet();
+			SimpleGraph check = (SimpleGraph)graph.clone();
+			for( Object vert : vertexSet )
+	        {
+				if(!tempSet.contains((Integer)vert))
+					check.removeVertex(vert);
+			}
+//			System.out.println("Printing graph check again:	" + check.vertexSet().toString());
+//			System.out.println();
+			for(Integer i: L) {
+				if(DijkstraShortestPath.findPathBetween(check, (i), (S[0])) != null) {
+					Q++;
+				}
+			}
+			System.out.println("The value Q is(size of S = 1):	" + Q);
+			return Q;
+		}
+		
+		int inputSize = S.length/2;
+		int countToInputSize = 0;
+		Integer[] storeS = new Integer[inputSize];
+		Integer[] storeL = new Integer[L.length];
+		for(int i = 0; i < S.length; i++) {
+			if(countToInputSize == inputSize) {
+				if(i - countToInputSize - 1 >= 0) {
+					int k = i - countToInputSize;
+					int j = 0;
+					while(k >= 0) {
+						storeL[j] = new Integer((Integer) L[k]);
+						k--;
+						j++;
+					}
+				}
+				countToInputSize = 0;
+				
+				Integer[] SminusSdash = new Integer[S.length-storeS.length];
+				Integer[] LplusSdash = new Integer[L.length+storeS.length];
+				
+				int ctr = 0;
+				ArrayList store = new ArrayList();
+				for(int i1 = 0; i1 < storeS.length; i1++) {
+					for(int j1 = 0; j1 < S.length; j1++) {
+						if(S[j1] == storeS[i1]) {
+//							System.out.print(S[j1] + " ");
+							store.add(j1);
+							ctr++;
+							break;
+						}
+					}
+				}
+//				System.out.println();
+				int sctr = 0;
+				for(int j1 = 0;j1 < S.length; j1++) {
+					if(!store.contains(j1)) {
+						SminusSdash[sctr] = S[j1];
+//						System.out.print(SminusSdash[sctr] +" ");
+						sctr++;
+					}
+				}
+//				System.out.println();
+				
+				for(int tmp = 0; tmp < storeL.length;tmp++)
+					LplusSdash[tmp] =  storeL[tmp];
+				int storeLlen = storeL.length;
+				for(int tmp = 0; tmp < storeS.length; tmp++)
+					LplusSdash[storeLlen+tmp] = storeS[tmp]; 
+				
+				int tw1 = findTreeWidthByRec(L, storeS, Q);
+				int tw2 = findTreeWidthByRec(LplusSdash, SminusSdash, Q);
+				Q = max(tw1, tw2);
+				System.out.println("Value of Q(S.size > 1):	" + Q);
+			}
+			else {
+				storeS[countToInputSize] = (Integer) S[i];
+				countToInputSize++;
+			}
+		}
+		return Q;
+	}    
 }
