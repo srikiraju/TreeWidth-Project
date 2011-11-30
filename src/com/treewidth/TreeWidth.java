@@ -9,6 +9,7 @@ import org.jgrapht.Graph;
 import com.treewidth.util.Permute;
 import java.math.BigInteger;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.BitSet;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -28,7 +29,7 @@ import org.jgrapht.graph.SimpleGraph;
 public class TreeWidth {
     SimpleGraph<Integer, DefaultEdge> graph;
     NeighborIndex nindex;
-    int upper_bound = 10;
+    int upper_bound = 11;
     int upper_bound_hit = 0;
 
     
@@ -143,12 +144,12 @@ public class TreeWidth {
     public int findDynamic()
     {
         
-        HashMap<HashSet, Integer> processed = new HashMap<HashSet, Integer>();
+        HashMap<BitSet, Integer> processed = new HashMap<BitSet, Integer>();
 
         nindex = new NeighborIndex( graph );
         for( int i = 1; i <= graph.vertexSet().size(); i++ )
         {
-            HashMap<HashSet, Integer> processed_now = new HashMap<HashSet, Integer>();
+            HashMap<BitSet, Integer> processed_now = new HashMap<BitSet, Integer>();
             Combinations combs_gen = new Combinations(graph.vertexSet().size(), i);
                         System.out.println( "Processing combs of size:" + i +":" + combs_gen.getTotal() );
 
@@ -158,33 +159,31 @@ public class TreeWidth {
                     System.out.println( combs_gen.getNumLeft() );
                 int a[] = (int[])combs_gen.next();
                 //Create graph containing these vertices
-                Set S = new HashSet( graph.vertexSet() );
-                HashSet vertices_to_remove = new HashSet( S );
+                BitSet S = new BitSet( graph.vertexSet().size() + 1 );
                 for( int tmp : a )
                 {
-                    vertices_to_remove.remove( ( Integer )(tmp+1) );
+                    S.set( tmp + 1 );
                 }
-                S.removeAll(vertices_to_remove);
                 
-                HashMap qs = new HashMap();
+                HashMap<Integer, Integer> qs = new HashMap<Integer, Integer>();
                 findQEvenBetter( S, qs );
                 
                 int tw = 1000;
                 //For all vertices in our checklist
-                for( Object v: S )
+                for( int v = S.nextSetBit(1); v >= 0; v = S.nextSetBit( v + 1 ) )
                 {
-                    HashSet<Integer> Sminusv = new HashSet<Integer>( S );
-                    Sminusv.remove((Integer)v);
+                    BitSet Sminusv = (BitSet)S.clone();
+                    Sminusv.clear( v );
                     //Find TW(S-v)
                     Integer tw1 = processed.get(Sminusv);
-                    if( tw1 == null && Sminusv.size() > 1 ) //eliminate this subset has tw > upperbound
+                    if( tw1 == null && Sminusv.cardinality() > 1 ) //eliminate this subset has tw > upperbound
                     {
                         upper_bound_hit ++;
                         continue;
                     }
                     //Find Q(S-v,v)
                     //Integer tw2 = findQBetter( Sminusv, (Integer)v );
-                    Integer tw2 = (Integer)qs.get(v);
+                    Integer tw2 = (Integer)qs.get(v);//TW( S - v )
 
                     if( tw1 != null && tw1 > tw2 )
                     {
@@ -198,12 +197,14 @@ public class TreeWidth {
                     }
                 }
                 if( tw < upper_bound )
-                    processed_now.put( new HashSet(S), tw);
+                    processed_now.put( S, tw );
             }
             processed = processed_now;
         }
         System.out.println( upper_bound_hit );
-        return processed.get( new HashSet( graph.vertexSet() ) ) == null ? upper_bound : (int)processed.get( new HashSet( graph.vertexSet() ) );
+        BitSet ret = new BitSet( graph.vertexSet().size() + 1);
+        ret.set(1, graph.vertexSet().size() + 1 );
+        return processed.get( ret ) == null ? upper_bound : (int)processed.get( ret );
     }
     
     public int findBruteForce()
@@ -315,7 +316,7 @@ public class TreeWidth {
     private int findQBetter(Set S, Integer v)
     {
         int Q = 0;
-        BitSet visited = new BitSet( graph.vertexSet().size() );
+        BitSet visited = new BitSet( graph.vertexSet().size() + 1 );
         visited.set( v );
         LinkedList queue = new LinkedList();
         for( Object a : nindex.neighborsOf(v) )
@@ -450,23 +451,23 @@ public class TreeWidth {
 	}    
 
     //Finding Q all at once, for all vertices
-    private void findQEvenBetter(Set S, HashMap qs)
+    private void findQEvenBetter(BitSet S, HashMap<Integer, Integer> qs)
     {
-        BitSet visited = new BitSet( graph.vertexSet().size() );
-        for( Object v : S )
+        BitSet visited = new BitSet( graph.vertexSet().size() + 1 );
+        for( int v = S.nextSetBit(1); v >= 0; v = S.nextSetBit( v + 1 ) )
         {
-            if( visited.get((Integer)v) )
+            if( visited.get( v ) )
                 continue;
             int Q = 0;
-            visited.set( (Integer)v );
+            visited.set( v );
 
             //All the vertices visited now are in the same connected
             //component and therefore have the same Q
-            BitSet cc = new BitSet( graph.vertexSet().size() );
-            BitSet notwithin_s = new BitSet( graph.vertexSet().size() );
-            cc.set((Integer)v);
+            BitSet cc = new BitSet( graph.vertexSet().size() + 1 );
+            BitSet notwithin_s = new BitSet( graph.vertexSet().size() + 1);
+            cc.set( v );
             LinkedList queue = new LinkedList();
-            for( Object a : nindex.neighborsOf(v) )
+            for( Object a : nindex.neighborsOf((Integer)v) )
             {
                 queue.add(a);
             }
@@ -478,7 +479,7 @@ public class TreeWidth {
                     continue;
                 visited.set(consider);
                 cc.set(consider);
-                if( S.contains(consider) )
+                if( S.get(consider) )
                 {
                     for( Object a : nindex.neighborsOf(consider) )
                     {
@@ -492,12 +493,15 @@ public class TreeWidth {
                     notwithin_s.set( consider );
                 }
             }
-            
-            for (int i = cc.nextSetBit(0); i >= 0; i = cc.nextSetBit(i+1)) {
+
+            visited.andNot(notwithin_s);
+            cc.andNot(notwithin_s);
+            for (int i = cc.nextSetBit(1); i >= 0; i = cc.nextSetBit(i+1)) {
                 qs.put(new Integer(i), new Integer(Q));
             }
             
-            visited.andNot(notwithin_s);
+
+
         }
     }
 }
